@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nuevo Libro</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-image: url('https://server.wallpaperalchemy.com/storage/wallpapers/121/4k-anime-wallpaper-starry-night-adventure.jpg'); 
+            background-size: cover;         
+            background-attachment: fixed;    
+            background-repeat: no-repeat;   
+            background-position: center center; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            width: 300px;
+            padding: 20px;
+            background-color: #ffffff;
+            border: 1px solid #ffccbc; 
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.08); 
+            border-radius: 8px; 
+        }
+
+        .window-title {
+            text-align: center;
+            font-size: 1.3em;
+            margin-bottom: 25px;
+            color: #887a7d; 
+            font-weight: bold;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            text-align: center;
+            color: #796669;
+            font-weight: normal;
+        }
+
+        .form-group input[type="text"],
+        .form-group select {
+            width: 100%;
+            padding: 8px; 
+            box-sizing: border-box;
+            border: 1px solid #f0b4b4; 
+            border-radius: 4px; 
+            height: 35px; 
+            text-align: center;
+            background-color: #fffafa;
+            color: #555;
+        }
+        
+        .form-group select {
+            width: 100%;
+            height: 35px; 
+            text-align-last: center; 
+            appearance: none; 
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23b3b3b3%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13.6-6.4H18.8c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%204.6%201.8%208.7%205.4%2011.3l139.2%20140c3.4%203.4%207.6%205.1%2012.9%205.1s9.5-1.7%2012.9-5.1l139.2-140c3.4-3.5%205.4-7.6%205.4-11.3%200-4.6-1.8-8.7-5.4-11.3z%22%2F%3E%3C%2Fsvg%3E');
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 10px;
+            padding-right: 30px; 
+        }
+
+        .form-group button {
+            display: block;
+            width: 120px; 
+            margin: 30px auto 0 auto; 
+            padding: 10px 15px;
+            background-color: #c7e9ed; 
+            border: 1px solid #a4d4d8;
+            border-radius: 25px;
+            cursor: pointer;
+            color: #4a6c6e;
+            font-weight: bold;
+            font-size: 1em;
+            transition: background-color 0.3s ease;  
+        }
+
+        .form-group button:hover {
+            background-color: #b2dce0; 
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="window-title">Nuevo Libro</div>
+    <form action="#" method="post">
+        <div class="form-group">
+            <label for="nombre">Nombre del Libro:</label>
+            <input type="text" id="nombre" name="nombre" required>
+        </div>
+
+        <div class="form-group">
+            <label for="descripcion">Descripción:</label>
+            <input type="text" id="descripcion" name="descripcion">
+        </div>
+
+        <div class="form-group">
+            <label for="publicado_por">Publicado por:</label>
+            <input type="text" id="publicado_por" name="publicado_por">
+        </div>
+
+        <div class="form-group">
+            <label for="anio">Año:</label>
+            <input type="text" id="anio" name="anio" pattern="[0-9]{4}" title="Debe ser un año de 4 dígitos (e.g., 2023)">
+        </div>
+
+        <div class="form-group">
+            <label for="genero">Género:</label>
+            <select id="genero" name="genero">
+                <option value="ficcion" selected>Ficción</option>
+                <option value="no_ficcion">No Ficción</option>
+                <option value="misterio">Misterio</option>
+                <option value="ciencia_ficcion">Ciencia Ficción</option>
+                <option value="romance">Romance</option>
+                <option value="otro">Otro</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <button type="submit">Guardar</button>
+        </div>
+    </form>
+</div>
+
+<script>
+document.querySelector("form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const libroData = {
+    nombre: document.getElementById("nombre").value,
+    descripcion: document.getElementById("descripcion").value,
+    publicado_por: document.getElementById("publicado_por").value,
+    anio: document.getElementById("anio").value,
+    genero: document.getElementById("genero").value
+  };
+
+  const response = await fetch("/guardar_libro/", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(libroData)
+  });
+
+  const data = await response.json();
+  if (data.status === "ok") {
+    alert("📘 Libro guardado correctamente");
+    // Redirigir a main_page
+    window.location.href = "/main_page/";
+  } else {
+    alert("⚠️ Error: " + data.mensaje);
+  }
+});
+</script>
+</body>
+</html>

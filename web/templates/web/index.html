@@ -1,0 +1,180 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Animación Form Login/Registro</title>
+
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&display=swap");
+    :root {
+      --white-color: hsl(0, 0%, 100%);
+      --body-font: "Poppins", sans-serif;
+      --h1-font-size: 1.75rem;
+      --normal-font-size: 1rem;
+      --small-font-size: .813rem;
+      --font-medium: 500;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: var(--body-font);
+      font-size: var(--normal-font-size);
+      color: var(--white-color);
+      background: url("{% static 'login-bg.png' %}") no-repeat center center fixed;
+      background-size: cover;
+      background-color: #000000;
+    }
+    .login { position: relative; height: 100vh; display: grid; place-items: center; padding: 1rem; overflow: hidden; }
+    .login__form {
+      position: relative;
+      z-index: 5;
+      width: 360px;
+      background-color: hsla(0, 0%, 10%, 0.12);
+      border: 2px solid rgba(255, 255, 255, 0.18);
+      padding: 2.5rem 1.5rem;
+      border-radius: 1rem;
+      backdrop-filter: blur(6px);
+    }
+    .login__forgot { color: #4da3ff; text-decoration: none; font-weight: var(--font-medium); transition: color 0.25s; }
+    .login__forgot:hover { color: #1e90ff; }
+    .login__title { text-align: center; font-size: var(--h1-font-size); font-weight: var(--font-medium); margin-bottom: 1.5rem; }
+    .login__content { display: grid; row-gap: 1.2rem; margin-bottom: 1.2rem; }
+    .login__box { position: relative; border-bottom: 2px solid rgba(255, 255, 255, 0.12); padding-bottom: .6rem; }
+    .login__input { width: 100%; padding: .8rem 0; background: none; color: var(--white-color); font-size: 1rem; border: none; outline: none; }
+    .login__label { position: absolute; left: 0; top: 12px; pointer-events: none; transition: top .25s, font-size .25s; font-weight: var(--font-medium); opacity: .95; }
+    .login__input:focus + .login__label, .login__input:not(:placeholder-shown) + .login__label { top: -12px; font-size: var(--small-font-size); }
+    .login__check { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; font-size: var(--small-font-size); }
+    .login__button { width: 100%; padding: 1rem; border-radius: .5rem; background: var(--white-color); color: #000; font-weight: var(--font-medium); cursor: pointer; margin-bottom: 1rem; border: none; }
+    .login__button:hover { background-color: #e0e0e0; }
+    .login__register { text-align: center; font-size: var(--small-font-size); }
+    .login__register a { color: var(--white-color); cursor: pointer; }
+    .hidden { display: none !important; }
+    @media (min-width: 576px) { .login__form { width: 430px; padding: 3rem; } .login__title { font-size: 2rem; } }
+  </style>
+</head>
+
+<body>
+  <div class="login">
+    <form class="login__form" id="loginForm" autocomplete="off">
+      <h1 class="login__title">Iniciar Sesión</h1>
+      <div class="login__content">
+        <div class="login__box">
+          <input type="email" id="login-email" class="login__input" placeholder=" " required>
+          <label for="login-email" class="login__label">Correo</label>
+        </div>
+        <div class="login__box">
+          <input type="password" id="login-pass" class="login__input" placeholder=" " required>
+          <label for="login-pass" class="login__label">Contraseña</label>
+        </div>
+      </div>
+      <div class="login__check">
+        <label><input type="checkbox" id="rememberLogin"> Recuérdame</label>
+        <a href="#" class="login__forgot">¿Olvidaste tu contraseña?</a>
+      </div>
+      <button type="submit" class="login__button">Entrar</button>
+      <p class="login__register">
+        ¿No tienes cuenta? <a id="switchToRegister">Crear una cuenta</a>
+      </p>
+    </form>
+
+    <form class="login__form hidden" id="registerForm" autocomplete="off">
+      <h1 class="login__title">Crear Cuenta</h1>
+      <div class="login__content">
+        <div class="login__box">
+          <input type="text" id="reg-nombre" class="login__input" placeholder=" " required>
+          <label for="reg-nombre" class="login__label">Nombre</label>
+        </div>
+        <div class="login__box">
+          <input type="email" id="reg-email" class="login__input" placeholder=" " required>
+          <label for="reg-email" class="login__label">Correo</label>
+        </div>
+        <div class="login__box">
+          <input type="password" id="reg-pass" class="login__input" placeholder=" " required>
+          <label for="reg-pass" class="login__label">Contraseña</label>
+        </div>
+      </div>
+      <button type="submit" class="login__button">Registrar</button>
+      <p class="login__register">
+        ¿Ya tienes cuenta? <a id="switchToLogin">Inicia sesión</a>
+      </p>
+    </form>
+  </div>
+
+  <script>
+    const loginForm = document.getElementById('loginForm');
+    const registerForm = document.getElementById('registerForm');
+    const switchToRegister = document.getElementById('switchToRegister');
+    const switchToLogin = document.getElementById('switchToLogin');
+
+    switchToRegister.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      loginForm.classList.add('hidden');
+      registerForm.classList.remove('hidden');
+      document.getElementById('reg-nombre').focus();
+    });
+    switchToLogin.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      registerForm.classList.add('hidden');
+      loginForm.classList.remove('hidden');
+      document.getElementById('login-email').focus();
+    });
+
+    registerForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const datosRegistro = {
+        nombre: "cuentaData",
+        usuario: document.getElementById('reg-nombre').value.trim(),
+        correo: document.getElementById('reg-email').value.trim(),
+        contrasena: document.getElementById('reg-pass').value,
+        creadoEn: new Date().toISOString()
+      };
+      fetch('/guardar-json/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(datosRegistro)
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === "ok") {
+          alert("✅ " + data.mensaje);
+          // Redirigir a main_page
+          window.location.href = '/main_page/';
+        } else {
+          alert("❌ " + data.mensaje);
+        }
+      })
+      .catch(err => alert("❌ Error: " + err));
+      registerForm.reset();
+    });
+
+    loginForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const datosLogin = {
+        nombre: "loginData",
+        correo: document.getElementById('login-email').value.trim(),
+        contrasena: document.getElementById('login-pass').value,
+        recordar: document.getElementById('rememberLogin').checked
+      };
+      fetch('/guardar-json/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(datosLogin)
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === "ok") {
+          alert("✅ " + data.mensaje);
+          // Redirigir a main_page
+          window.location.href = '/main_page/';
+        } else {
+          alert("❌ " + data.mensaje);
+        }
+      })
+      .catch(err => alert("❌ Error: " + err));
+      loginForm.reset();
+    });
+  </script>
+</body>
+</html>

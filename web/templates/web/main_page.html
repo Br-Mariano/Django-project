@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Agenda - Biblioteca</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: linear-gradient(180deg, #fff7ef, #f0f4ff);
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 25px;
+      background-color: #ffffffcc;
+      border-bottom: 1px solid #ddd;
+      backdrop-filter: blur(6px);
+      position: relative;
+      z-index: 100;
+    }
+
+    #clock {
+      font-size: 18px;
+      font-weight: bold;
+      color: #2a3cff;
+      background-color: #ebebff;
+      padding: 5px 12px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    .right-header {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      position: relative;
+    }
+
+    .greeting {
+      color: #4da3ff;
+      font-weight: 600;
+    }
+
+    .notif-btn {
+      position: relative;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 22px;
+    }
+
+    .notif-dot {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 9px;
+      height: 9px;
+      background: red;
+      border-radius: 50%;
+      display: none;
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(1.2); }
+    }
+
+    .notifications {
+      position: absolute;
+      top: 45px;
+      right: 0;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+      padding: 10px 15px;
+      min-width: 280px;
+      max-width: 320px;
+      max-height: 300px;
+      overflow-y: auto;
+      display: none;
+      z-index: 1000;
+    }
+
+    .notif {
+      padding: 8px;
+      margin: 5px 0;
+      background: #fff3cd;
+      border-left: 3px solid #ffc107;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+
+    main {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .sidebar {
+      width: 220px;
+      background-color: #fdfaf7;
+      border-right: 1px solid #ddd;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px 10px;
+      gap: 15px;
+    }
+
+    .nav button {
+      width: 80%;
+      padding: 10px 0;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+      border: none;
+      transition: all 0.25s;
+      margin-bottom: 10px;
+    }
+
+    .nav button.active {
+      box-shadow: inset 0 -3px 0 rgba(0,0,0,0.3);
+      outline: 2px solid #888;
+    }
+
+    .agenda-btn { background-color: #e7c7ff; }
+    .biblioteca-btn { background-color: #d5f2d5; }
+
+    .nuevo-btn {
+      font-size: 16px;
+      padding: 10px 25px;
+      background-color: #d9ffdb;
+      border: 1px solid #000;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 20px;
+      transition: 0.3s;
+    }
+
+    .nuevo-btn:hover {
+      background-color: #bff7c0;
+      transform: scale(1.05);
+    }
+
+    .content-area {
+      flex: 1;
+      padding: 25px;
+      overflow-y: auto;
+      background-color: #ffffffb0;
+      backdrop-filter: blur(3px);
+      transition: all 0.4s ease;
+    }
+
+    .titulo-dia {
+      font-size: 20px;
+      font-weight: bold;
+      color: #444;
+      margin-bottom: 15px;
+      padding-left: 5px;
+    }
+
+    .panel {
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      margin-bottom: 20px;
+      transition: 0.3s;
+      animation: fadeIn 0.4s ease;
+      position: relative;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .panel h2 { margin-top: 0; color: #333; border-bottom: 2px solid #ddd; padding-bottom: 8px; }
+    .panel p { color: #555; }
+    .panel small { color: #888; }
+
+    .panel-actions {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-edit, .btn-delete {
+      padding: 5px 10px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: bold;
+      transition: 0.2s;
+    }
+
+    .btn-edit {
+      background-color: #fff3cd;
+      color: #856404;
+    }
+
+    .btn-edit:hover {
+      background-color: #ffeaa7;
+    }
+
+    .btn-delete {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+
+    .btn-delete:hover {
+      background-color: #f5c6cb;
+    }
+
+    footer {
+      text-align: center;
+      font-size: 13px;
+      color: #777;
+      padding: 8px 0;
+      border-top: 1px solid #ddd;
+      background-color: #f9f9f9cc;
+      backdrop-filter: blur(4px);
+    }
+
+    .modal-bg {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+      z-index: 500;
+    }
+
+    .modal {
+      background: #fff;
+      border-radius: 10px;
+      padding: 20px;
+      width: 350px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.3);
+      animation: fadeIn 0.3s ease;
+    }
+
+    .modal input, .modal textarea {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+
+    .modal button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .btn-guardar { background-color: #9aff9a; }
+    .btn-cancelar { background-color: #ffc5c5; margin-left: 8px; }
+
+    .alarm-alert {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #fff;
+      border: 3px solid #ff6b6b;
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 0 30px rgba(255,107,107,0.5);
+      z-index: 2000;
+      text-align: center;
+      animation: shake 0.5s;
+      display: none;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
+      25% { transform: translate(-50%, -50%) rotate(-5deg); }
+      75% { transform: translate(-50%, -50%) rotate(5deg); }
+    }
+
+    .alarm-alert h2 {
+      color: #ff6b6b;
+      margin-top: 0;
+    }
+
+    .alarm-alert button {
+      background-color: #ff6b6b;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 15px;
+    }
+
+    .alarm-alert button:hover {
+      background-color: #ff5252;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div id="clock">00:00:00</div>
+    <div class="right-header">
+      <div class="greeting" id="greeting">Hola, Usuario</div>
+      <button class="notif-btn" id="notif-btn" onclick="toggleNotificaciones()">
+        🔔
+        <span class="notif-dot" id="notif-dot"></span>
+      </button>
+      <div class="notifications" id="notificaciones"></div>
+    </div>
+  </header>
+
+  <main>
+    <div class="sidebar">
+      <div class="nav">
+        <button class="agenda-btn active" onclick="showSection('agenda')">Agenda</button>
+        <button class="biblioteca-btn" onclick="showSection('biblioteca')">Biblioteca</button>
+      </div>
+      <button class="nuevo-btn" onclick="abrirModal()">+ Nuevo</button>
+    </div>
+
+    <div class="content-area" id="section-content"></div>
+  </main>
+
+  <footer>© 2025 shupapiproyecto</footer>
+
+  <!-- Modal -->
+  <div class="modal-bg" id="modal-bg">
+    <div class="modal">
+      <h3 id="modal-title">Agregar nuevo elemento</h3>
+      <input type="hidden" id="edit-id">
+      <input type="text" id="titulo" placeholder="Título">
+      <textarea id="descripcion" placeholder="Descripción" rows="3"></textarea>
+      <input type="time" id="hora">
+      <div style="text-align:right;">
+        <button class="btn-guardar" onclick="guardarPanel()">Guardar</button>
+        <button class="btn-cancelar" onclick="cerrarModal()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alerta de alarma -->
+  <div class="alarm-alert" id="alarm-alert">
+    <h2>⏰ ¡RECORDATORIO!</h2>
+    <div id="alarm-message"></div>
+    <button onclick="detenerAlarma()">Aceptar</button>
+  </div>
+
+  <!-- Audio de alarma -->
+  <audio id="alarm-sound" loop>
+    <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLaiTcIF2W99MNyIgU7j9jyz3ImBigAEgAeABQAFgAYABQAEgASABAADAAKAAgAAAAA7//u//X/9v/5//f/+P/5//P/8v/x/+//8P/x//X/+v/3//T/8v/x//X/9v/5//7//P/1//P/9//8//z/+v/3//X/9P/2//j/+v/7//n/8//v//b/+v/5//P/8P/z//z/8v/u//P/+v/y/+7/7f/y//n/+v/v/+n/7v/3//7/8P/o/+3/9v/9//T/7P/u//j/+f/y/+r/7P/3//z/9f/s/+z/9v/9//f/8v/x//X/+P/0/+v/6f/y/wAA8P/n/+v/+P/7//P/7f/v//f/+v/x/+z/8P/5//v/9P/u//D/+f/5//P/7v/x//r/+f/y//D/9P/9//n/8v/v//X/+f/3//T/8v/0//v/+f/y//H/9P/5//f/9P/y//T/9//4//b/9P/0//n/+f/4//f/+P/3//j/+f/4//f/9//4//j/+f/4//T/9P/2//j/+P/3//T/9P/2//n/+P/3//T/8//2//r/+P/1//P/9P/3//r/+P/1//P/9P/3//n/+P/1//P/9P/3//n/+P/2//T/9f/4//n/+P/2//T/9v/4//r/+f/3//b/9//5//v/+f/3//b/+P/6//z/+v/4//f/+P/6//3/+//5//f/+P/7//3/+//5//j/+f/7//3//P/6//n/+f/7//3//P/7//r/+v/8//7//f/7//r/+//9//////7//f/7//v//f/+//////7//f/8//3//v///////v/9//3//v////////////////////////////////////////////8=" type="audio/wav">
+  </audio>
+
+  <script>
+    // ------------------ Variables globales ------------------
+    const content = document.getElementById('section-content');
+    let seccionActual = 'agenda';
+    let datos = { agenda: [], biblioteca: [] };
+    let modoEdicion = false;
+    let eventosNotificados = new Set();
+    const alarmSound = document.getElementById('alarm-sound');
+
+    // ------------------ Cargar datos del usuario desde API Django ------------------
+    fetch('/api/cuenta-data/')
+      .then(res => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+      })
+      .then(data => {
+        if (data.status === 'error') {
+          console.error('Error del servidor:', data.mensaje);
+          document.getElementById('greeting').textContent = 'Hola, Usuario';
+        } else {
+          document.getElementById('greeting').textContent = `Hola, ${data.usuario}`;
+          cargarRecordatorios();
+        }
+      })
+      .catch(err => {
+        console.error('Error al cargar usuario:', err);
+        document.getElementById('greeting').textContent = 'Hola, Usuario';
+      });
+
+    // ------------------ Cargar recordatorios del usuario ------------------
+    function cargarRecordatorios() {
+      fetch('/api/recordatorios/')
+        .then(res => res.json())
+        .then(response => {
+          if (response.status === 'ok') {
+            datos = response.data;
+            renderizar();
+            verificarProximosEventos();
+          }
+        })
+        .catch(err => console.error('Error al cargar recordatorios:', err));
+    }
+
+    // ------------------ Reloj ------------------
+    function updateClock() {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      document.getElementById('clock').textContent = `${hours}:${minutes}:${seconds}`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // ------------------ Agenda y Biblioteca ------------------
+    function showSection(seccion) {
+      seccionActual = seccion;
+      document.querySelectorAll('.nav button').forEach(btn => btn.classList.remove('active'));
+      document.querySelector(`.${seccion}-btn`).classList.add('active');
+  
+      const nuevoBtn = document.querySelector('.nuevo-btn');
+  
+      if (seccion === 'biblioteca') {
+        nuevoBtn.onclick = function() {
+          window.location.href = '/registro_libro/';
+        };
+      } else {
+        nuevoBtn.onclick = abrirModal;
+      }
+  
+      renderizar();
+    }
+
+    function abrirModal(itemId = null) {
+      modoEdicion = itemId !== null;
+      document.getElementById('modal-title').textContent = modoEdicion ? 'Editar elemento' : 'Agregar nuevo elemento';
+      
+      if (modoEdicion) {
+        const item = datos[seccionActual].find(i => i.id == itemId); // Comparación flexible
+        if (item) {
+          document.getElementById('edit-id').value = itemId;
+          document.getElementById('titulo').value = item.titulo;
+          document.getElementById('descripcion').value = item.descripcion;
+          document.getElementById('hora').value = item.hora;
+        }
+      }
+      
+      document.getElementById('modal-bg').style.display = 'flex';
+    }
+
+    function cerrarModal() {
+      document.getElementById('modal-bg').style.display = 'none';
+      document.getElementById('edit-id').value = '';
+      document.getElementById('titulo').value = '';
+      document.getElementById('descripcion').value = '';
+      document.getElementById('hora').value = '';
+      modoEdicion = false;
+    }
+
+    function guardarPanel() {
+      const titulo = document.getElementById('titulo').value.trim();
+      const descripcion = document.getElementById('descripcion').value.trim();
+      const hora = document.getElementById('hora').value;
+      
+      if (!titulo || !hora) return alert("Agrega un título y una hora.");
+
+      const itemData = {
+        titulo,
+        descripcion,
+        hora,
+        seccion: seccionActual
+      };
+
+      // Solo agregar ID si estamos editando
+      if (modoEdicion) {
+        itemData.id = document.getElementById('edit-id').value;
+      }
+
+      const url = modoEdicion ? '/api/recordatorios/editar/' : '/api/recordatorios/guardar/';
+
+      fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(itemData)
+      })
+      .then(res => res.json())
+      .then(response => {
+        if (response.status === 'ok') {
+          cerrarModal();
+          cargarRecordatorios();
+        } else {
+          alert('Error: ' + response.mensaje);
+        }
+      })
+      .catch(err => {
+        console.error('Error al guardar:', err);
+        alert('Error al guardar el recordatorio');
+      });
+    }
+
+    function eliminarPanel(itemId) {
+      if (!confirm('¿Estás seguro de eliminar este recordatorio?')) return;
+
+      fetch('/api/recordatorios/eliminar/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: itemId, seccion: seccionActual })
+      })
+      .then(res => res.json())
+      .then(response => {
+        if (response.status === 'ok') {
+          cargarRecordatorios();
+        } else {
+          alert('Error: ' + response.mensaje);
+        }
+      })
+      .catch(err => {
+        console.error('Error al eliminar:', err);
+        alert('Error al eliminar el recordatorio');
+      });
+    }
+
+    // ------------------ Renderizar contenido ------------------
+    function renderizar() {
+      content.innerHTML = '';
+      
+      if (seccionActual === 'biblioteca') {
+        fetch('/obtener_libros/')
+          .then(res => res.json())
+          .then(response => {
+            if (response.status === 'ok') {
+              const libros = response.data;
+              
+              if (libros.length === 0) {
+                content.innerHTML = `
+                  <div class="panel">
+                    <h2>📚 Biblioteca</h2>
+                    <p>No hay libros aún. Usa el botón <b>+ Nuevo</b> para agregar uno.</p>
+                  </div>`;
+                return;
+              }
+
+              const tituloDia = document.createElement('div');
+              tituloDia.className = 'titulo-dia';
+              tituloDia.textContent = 'Estos son tus libros guardados 📚';
+              content.appendChild(tituloDia);
+
+              libros.forEach(libro => {
+                const panel = document.createElement('div');
+                panel.className = 'panel';
+                panel.innerHTML = `
+                  <div class="panel-actions">
+                    <button class="btn-delete" onclick="eliminarLibro('${libro.id}')">🗑️ Eliminar</button>
+                  </div>
+                  <h2>${libro.nombre}</h2>
+                  <p>${libro.descripcion}</p>
+                  <small>📖 Autor: ${libro.publicado_por} | 📅 Año: ${libro.anio} | 🎭 Género: ${libro.genero}</small>
+                `;
+                content.appendChild(panel);
+              });
+            }
+          })
+          .catch(err => console.error('Error al cargar libros:', err));
+        
+        return;
+      }
+
+      const lista = datos[seccionActual];
+      
+      if (lista.length === 0) {
+        content.innerHTML = `
+          <div class="panel">
+            <h2>📅 Agenda</h2>
+            <p>No hay elementos aún. Usa el botón <b>+ Nuevo</b> para agregar uno.</p>
+          </div>`;
+        return;
+      }
+
+      const tituloDia = document.createElement('div');
+      tituloDia.className = 'titulo-dia';
+      tituloDia.textContent = 'Estas son tus actividades de hoy 📅';
+      content.appendChild(tituloDia);
+      
+      lista.sort((a, b) => a.hora.localeCompare(b.hora));
+
+      lista.forEach(item => {
+        const panel = document.createElement('div');
+        panel.className = 'panel';
+        panel.innerHTML = `
+          <div class="panel-actions">
+            <button class="btn-edit" onclick="abrirModal('${item.id}')">✏️ Editar</button>
+            <button class="btn-delete" onclick="eliminarPanel('${item.id}')">🗑️ Eliminar</button>
+          </div>
+          <h2>${item.titulo}</h2>
+          <p>${item.descripcion}</p>
+          <small>🕒 ${item.hora}</small>
+        `;
+        content.appendChild(panel);
+      });
+    }
+
+    // ------------------ Eliminar libro ------------------
+    function eliminarLibro(libroId) {
+      if (!confirm('¿Estás seguro de eliminar este libro?')) return;
+
+      fetch('/eliminar_libro/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: libroId })
+      })
+      .then(res => res.json())
+      .then(response => {
+        if (response.status === 'ok') {
+          alert('📚 Libro eliminado correctamente');
+          renderizar();
+        } else {
+          alert('Error: ' + response.mensaje);
+        }
+      })
+      .catch(err => {
+        console.error('Error al eliminar libro:', err);
+        alert('Error al eliminar el libro');
+      });
+    }
+
+    // ------------------ Notificaciones y Alarmas ------------------
+    const notificacionesDiv = document.getElementById('notificaciones');
+    const notifDot = document.getElementById('notif-dot');
+    const alarmAlert = document.getElementById('alarm-alert');
+    const alarmMessage = document.getElementById('alarm-message');
+
+    function toggleNotificaciones() {
+      notificacionesDiv.style.display = notificacionesDiv.style.display === 'block' ? 'none' : 'block';
+    }
+
+    document.addEventListener('click', function(event) {
+      if (!event.target.closest('.notif-btn') && !event.target.closest('.notifications')) {
+        notificacionesDiv.style.display = 'none';
+      }
+    });
+
+    function verificarProximosEventos() {
+      if (!datos.agenda || datos.agenda.length === 0) {
+        notifDot.style.display = 'none';
+        notificacionesDiv.innerHTML = '<p>No hay notificaciones por ahora.</p>';
+        return;
+      }
+
+      const ahora = new Date();
+      const horaActual = ahora.getHours() * 60 + ahora.getMinutes();
+      
+      const proximos = datos.agenda.filter(item => {
+        const [h, m] = item.hora.split(':').map(Number);
+        const minutosEvento = h * 60 + m;
+        const diferencia = minutosEvento - horaActual;
+        return diferencia >= 0 && diferencia <= 10;
+      });
+
+      const eventosAhora = datos.agenda.filter(item => {
+        const [h, m] = item.hora.split(':').map(Number);
+        const minutosEvento = h * 60 + m;
+        const diferencia = Math.abs(minutosEvento - horaActual);
+        return diferencia <= 1;
+      });
+
+      if (proximos.length > 0) {
+        notifDot.style.display = 'block';
+        notificacionesDiv.innerHTML = '';
+        proximos.forEach(ev => {
+          const notif = document.createElement('div');
+          notif.className = 'notif';
+          notif.textContent = `⏰ En menos de 10 min: ${ev.titulo} (${ev.hora})`;
+          notificacionesDiv.appendChild(notif);
+        });
+      } else {
+        notifDot.style.display = 'none';
+        notificacionesDiv.innerHTML = '<p>No hay notificaciones por ahora.</p>';
+      }
+
+      eventosAhora.forEach(evento => {
+        const eventoKey = `${evento.id}-${evento.hora}`;
+        if (!eventosNotificados.has(eventoKey)) {
+          eventosNotificados.add(eventoKey);
+          activarAlarma(evento);
+        }
+      });
+    }
+
+    function activarAlarma(evento) {
+      alarmMessage.innerHTML = `
+        <h3>${evento.titulo}</h3>
+        <p>${evento.descripcion}</p>
+        <p><strong>Hora: ${evento.hora}</strong></p>
+      `;
+      alarmAlert.style.display = 'block';
+      alarmSound.play().catch(err => console.log('Error al reproducir sonido:', err));
+    }
+
+    function detenerAlarma() {
+      alarmAlert.style.display = 'none';
+      alarmSound.pause();
+      alarmSound.currentTime = 0;
+    }
+
+    setInterval(verificarProximosEventos, 30000);
+  </script>
+</body>
+</html>
