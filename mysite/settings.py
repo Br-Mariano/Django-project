@@ -33,9 +33,9 @@ STATICFILES_DIRS = [
 SECRET_KEY = 'django-insecure-p#ay78@ix5dk#aq&x^*##j_3eaz2@&gs9w)+h55cxd#g72y1a+'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False 
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['geagre.lat', 'www.geagre.lat', '98.84.150.75']
     
 
 # Application definition
