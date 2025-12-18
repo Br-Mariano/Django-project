@@ -185,7 +185,7 @@ def guardar_json(request):
 
                 # Guardar en sesión
                 request.session['usuario_id'] = usuario.id
-                return JsonResponse({"status": "ok", "mensaje": "Cuenta Creada en HFHFHFHDH"})
+                return JsonResponse({"status": "ok", "mensaje": "Cuenta Creada en GGGGGGGGGGGGGGGGGGGGGGG"})
 
             elif tipo == "loginData":
                 # Inicio de sesión
