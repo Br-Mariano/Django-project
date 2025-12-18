@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Usuario, Recordatorio, Libro
+from .models import Usuario, Recordatorio, Libro, MiniRecordatorio
 
 @admin.register(Usuario)
 class UsuarioAdmin(admin.ModelAdmin):
@@ -9,6 +9,12 @@ class UsuarioAdmin(admin.ModelAdmin):
 
 @admin.register(Recordatorio)
 class RecordatorioAdmin(admin.ModelAdmin):
+    list_display = ('titulo', 'usuario', 'hora', 'creado_en')
+    search_fields = ('titulo', 'descripcion')
+    list_filter = ('hora', 'creado_en', 'usuario')
+
+@admin.register(MiniRecordatorio)
+class MiniRecordatorioAdmin(admin.ModelAdmin):
     list_display = ('titulo', 'usuario', 'hora', 'creado_en')
     search_fields = ('titulo', 'descripcion')
     list_filter = ('hora', 'creado_en', 'usuario')

@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -33,9 +34,9 @@ STATICFILES_DIRS = [
 SECRET_KEY = 'django-insecure-p#ay78@ix5dk#aq&x^*##j_3eaz2@&gs9w)+h55cxd#g72y1a+'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False 
+DEBUG = True  
 
-ALLOWED_HOSTS = ['geagre.lat', 'www.geagre.lat', '98.84.150.75']
+ALLOWED_HOSTS = ['geagre.lat', 'www.geagre.lat', '98.84.150.75', 'localhost', '127.0.0.1', '[::1]']
     
 
 # Application definition
@@ -87,12 +88,11 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         
-        # ⚠️ DATOS DE TU INSTANCIA RDS:
-        'NAME': 'shupapibase',  # ⚠️ Nombre de la base de datos que creaste
-        'USER': 'shupapidatabase',  # ⚠️ Usuario maestro (el que configuraste al crear la instancia)
-        'PASSWORD': '020507Bruno',  # ⚠️ LA CONTRASEÑA QUE PUSISTE AL CREAR LA INSTANCIA
-        'HOST': 'shupapibase.c6x4ouicsyul.us-east-1.rds.amazonaws.com',  # ✅ Endpoint de tu RDS
-        'PORT': '3306',  # ✅ Puerto
+        'NAME': 'shupapibase',  # 
+        'USER': 'shupapidatabase',  
+        'PASSWORD': '020507Bruno',  
+        'HOST': 'shupapibase.c6x4ouicsyul.us-east-1.rds.amazonaws.com', 
+        'PORT': '3306',  # Puerto
         
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
@@ -137,6 +137,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles/')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

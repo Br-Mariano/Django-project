@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from .models import Usuario, Recordatorio, Libro
+from .models import Usuario, Recordatorio, Libro, MiniRecordatorio
 import json
 
 def home(request):
@@ -12,6 +12,7 @@ def main_page(request):
 
 def registro_libro(request):
     return render(request, 'web/registro_de_libro.html')
+
 
 def get_cuenta_data(request):
     """Vista para obtener los datos del usuario actual de la sesión"""
@@ -32,6 +33,127 @@ def get_cuenta_data(request):
             
     except Exception as e:
         return JsonResponse({"status": "error", "mensaje": str(e)})
+
+@csrf_exempt
+def guardar_mini_recordatorio(request):
+    """Guardar nuevo mini recordatorio - Funciona igual que recordatorio normal"""
+    if request.method == "POST":
+        try:
+            usuario_id = request.session.get('usuario_id')
+            if not usuario_id:
+                return JsonResponse({"status": "error", "mensaje": "No hay sesión activa"})
+            
+            try:
+                usuario = Usuario.objects.get(id=usuario_id)
+            except Usuario.DoesNotExist:
+                return JsonResponse({"status": "error", "mensaje": "Usuario no encontrado"})
+            
+            data = json.loads(request.body)
+            
+            # Crear nuevo mini recordatorio
+            mini_rec = MiniRecordatorio.objects.create(
+                usuario=usuario,
+                titulo=data.get("titulo"),
+                descripcion=data.get("descripcion", ""),
+                hora=data.get("hora")
+            )
+            
+            return JsonResponse({
+                "status": "ok", 
+                "mensaje": "Mini recordatorio guardado",
+                "id": mini_rec.id
+            })
+            
+        except Exception as e:
+            print(f"Error en guardar_mini_recordatorio: {str(e)}")
+            return JsonResponse({"status": "error", "mensaje": str(e)})
+    else:
+        return JsonResponse({"status": "error", "mensaje": "Método no permitido"})
+
+
+def obtener_mini_recordatorios(request):
+    """Obtener todos los mini recordatorios del usuario"""
+    try:
+        usuario_id = request.session.get('usuario_id')
+        if not usuario_id:
+            return JsonResponse({"status": "error", "mensaje": "No hay sesión activa"})
+        
+        try:
+            usuario = Usuario.objects.get(id=usuario_id)
+        except Usuario.DoesNotExist:
+            return JsonResponse({"status": "error", "mensaje": "Usuario no encontrado"})
+        
+        # Obtener mini recordatorios del usuario
+        mini_recs = MiniRecordatorio.objects.filter(usuario=usuario).order_by('hora')
+        
+        mini_lista = []
+        for rec in mini_recs:
+            mini_lista.append({
+                "id": str(rec.id),
+                "titulo": rec.titulo,
+                "descripcion": rec.descripcion,
+                "hora": rec.hora.strftime('%H:%M')
+            })
+            
+        return JsonResponse({"status": "ok", "data": mini_lista})
+        
+    except Exception as e:
+        print(f"Error en obtener_mini_recordatorios: {str(e)}")
+        return JsonResponse({"status": "error", "mensaje": str(e)})
+
+
+@csrf_exempt
+def editar_mini_recordatorio(request):
+    """Editar un mini recordatorio"""
+    if request.method == "POST":
+        try:
+            usuario_id = request.session.get('usuario_id')
+            if not usuario_id:
+                return JsonResponse({"status": "error", "mensaje": "No hay sesión activa"})
+            
+            data = json.loads(request.body)
+            mini_rec_id = data.get("id")
+            
+            try:
+                mini_rec = MiniRecordatorio.objects.get(id=mini_rec_id, usuario_id=usuario_id)
+                mini_rec.titulo = data.get("titulo")
+                mini_rec.descripcion = data.get("descripcion", "")
+                mini_rec.hora = data.get("hora")
+                mini_rec.save()
+                
+                return JsonResponse({"status": "ok", "mensaje": "Mini recordatorio actualizado"})
+            except MiniRecordatorio.DoesNotExist:
+                return JsonResponse({"status": "error", "mensaje": "Mini recordatorio no encontrado"})
+            
+        except Exception as e:
+            return JsonResponse({"status": "error", "mensaje": str(e)})
+    else:
+        return JsonResponse({"status": "error", "mensaje": "Método no permitido"})
+
+
+@csrf_exempt
+def eliminar_mini_recordatorio(request):
+    """Eliminar un mini recordatorio"""
+    if request.method == "POST":
+        try:
+            usuario_id = request.session.get('usuario_id')
+            if not usuario_id:
+                return JsonResponse({"status": "error", "mensaje": "No hay sesión activa"})
+            
+            data = json.loads(request.body)
+            mini_rec_id = data.get("id")
+            
+            try:
+                mini_rec = MiniRecordatorio.objects.get(id=mini_rec_id, usuario_id=usuario_id)
+                mini_rec.delete()
+                return JsonResponse({"status": "ok", "mensaje": "Mini recordatorio eliminado"})
+            except MiniRecordatorio.DoesNotExist:
+                return JsonResponse({"status": "error", "mensaje": "Mini recordatorio no encontrado"})
+            
+        except Exception as e:
+            return JsonResponse({"status": "error", "mensaje": str(e)})
+    else:
+        return JsonResponse({"status": "error", "mensaje": "Método no permitido"})
 
 @csrf_exempt
 def guardar_json(request):

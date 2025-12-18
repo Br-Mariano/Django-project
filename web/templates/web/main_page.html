@@ -134,6 +134,7 @@
     }
 
     .agenda-btn { background-color: #e7c7ff; }
+    .mini-agenda-btn { background-color: #ffd9e8; font-size: 13px; }
     .biblioteca-btn { background-color: #d5f2d5; }
 
     .nuevo-btn {
@@ -336,6 +337,7 @@
     <div class="sidebar">
       <div class="nav">
         <button class="agenda-btn active" onclick="showSection('agenda')">Agenda</button>
+        <button class="mini-agenda-btn" onclick="showSection('mini_agenda')">Mini Recordatorios</button>
         <button class="biblioteca-btn" onclick="showSection('biblioteca')">Biblioteca</button>
       </div>
       <button class="nuevo-btn" onclick="abrirModal()">+ Nuevo</button>
@@ -374,29 +376,33 @@
   </audio>
 
   <script>
-    // ------------------ Variables globales ------------------
+    // ==========================================
+    // VARIABLES GLOBALES
+    // ==========================================
     const content = document.getElementById('section-content');
     let seccionActual = 'agenda';
-    let datos = { agenda: [], biblioteca: [] };
+    let datos = { 
+      agenda: [], 
+      mini_agenda: [],
+      biblioteca: [] 
+    };
     let modoEdicion = false;
     let eventosNotificados = new Set();
     const alarmSound = document.getElementById('alarm-sound');
 
-    // ------------------ Cargar datos del usuario desde API Django ------------------
+    // ==========================================
+    // INICIALIZACIÓN - Cargar usuario y datos
+    // ==========================================
     fetch('/api/cuenta-data/')
-      .then(res => {
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        return res.json();
-      })
+      .then(res => res.json())
       .then(data => {
         if (data.status === 'error') {
-          console.error('Error del servidor:', data.mensaje);
+          console.error('Error:', data.mensaje);
           document.getElementById('greeting').textContent = 'Hola, Usuario';
         } else {
           document.getElementById('greeting').textContent = `Hola, ${data.usuario}`;
           cargarRecordatorios();
+          cargarMiniRecordatorios();
         }
       })
       .catch(err => {
@@ -404,21 +410,38 @@
         document.getElementById('greeting').textContent = 'Hola, Usuario';
       });
 
-    // ------------------ Cargar recordatorios del usuario ------------------
+    // ==========================================
+    // CARGAR DATOS DESDE MARIADB
+    // ==========================================
     function cargarRecordatorios() {
       fetch('/api/recordatorios/')
         .then(res => res.json())
         .then(response => {
           if (response.status === 'ok') {
-            datos = response.data;
-            renderizar();
+            datos.agenda = response.data.agenda || [];
+            datos.biblioteca = response.data.biblioteca || [];
+            if (seccionActual === 'agenda') renderizar();
             verificarProximosEventos();
           }
         })
         .catch(err => console.error('Error al cargar recordatorios:', err));
     }
 
-    // ------------------ Reloj ------------------
+    function cargarMiniRecordatorios() {
+      fetch('/api/mini-recordatorios/')
+        .then(res => res.json())
+        .then(response => {
+          if (response.status === 'ok') {
+            datos.mini_agenda = response.data || [];
+            if (seccionActual === 'mini_agenda') renderizar();
+          }
+        })
+        .catch(err => console.error('Error al cargar mini recordatorios:', err));
+    }
+
+    // ==========================================
+    // RELOJ
+    // ==========================================
     function updateClock() {
       const now = new Date();
       const hours = String(now.getHours()).padStart(2, '0');
@@ -429,18 +452,25 @@
     setInterval(updateClock, 1000);
     updateClock();
 
-    // ------------------ Agenda y Biblioteca ------------------
+    // ==========================================
+    // NAVEGACIÓN ENTRE SECCIONES
+    // ==========================================
     function showSection(seccion) {
       seccionActual = seccion;
       document.querySelectorAll('.nav button').forEach(btn => btn.classList.remove('active'));
-      document.querySelector(`.${seccion}-btn`).classList.add('active');
+      
+      if (seccion === 'agenda') {
+        document.querySelector('.agenda-btn').classList.add('active');
+      } else if (seccion === 'mini_agenda') {
+        document.querySelector('.mini-agenda-btn').classList.add('active');
+      } else if (seccion === 'biblioteca') {
+        document.querySelector('.biblioteca-btn').classList.add('active');
+      }
   
       const nuevoBtn = document.querySelector('.nuevo-btn');
   
       if (seccion === 'biblioteca') {
-        nuevoBtn.onclick = function() {
-          window.location.href = '/registro_libro/';
-        };
+        nuevoBtn.onclick = () => window.location.href = '/registro_libro/';
       } else {
         nuevoBtn.onclick = abrirModal;
       }
@@ -448,12 +478,26 @@
       renderizar();
     }
 
+    // ==========================================
+    // MODAL - CRUD
+    // ==========================================
     function abrirModal(itemId = null) {
       modoEdicion = itemId !== null;
-      document.getElementById('modal-title').textContent = modoEdicion ? 'Editar elemento' : 'Agregar nuevo elemento';
+      
+      let tituloModal = 'Agregar nuevo elemento';
+      if (modoEdicion) {
+        tituloModal = 'Editar elemento';
+      } else if (seccionActual === 'mini_agenda') {
+        tituloModal = 'Agregar Mini Recordatorio';
+      } else if (seccionActual === 'agenda') {
+        tituloModal = 'Agregar Recordatorio';
+      }
+      
+      document.getElementById('modal-title').textContent = tituloModal;
       
       if (modoEdicion) {
-        const item = datos[seccionActual].find(i => i.id == itemId); // Comparación flexible
+        const lista = datos[seccionActual];
+        const item = lista.find(i => i.id == itemId);
         if (item) {
           document.getElementById('edit-id').value = itemId;
           document.getElementById('titulo').value = item.titulo;
@@ -481,19 +525,16 @@
       
       if (!titulo || !hora) return alert("Agrega un título y una hora.");
 
-      const itemData = {
-        titulo,
-        descripcion,
-        hora,
-        seccion: seccionActual
-      };
+      const itemData = { titulo, descripcion, hora };
+      if (modoEdicion) itemData.id = document.getElementById('edit-id').value;
 
-      // Solo agregar ID si estamos editando
-      if (modoEdicion) {
-        itemData.id = document.getElementById('edit-id').value;
+      // Determinar URL según sección
+      let url;
+      if (seccionActual === 'mini_agenda') {
+        url = modoEdicion ? '/api/mini-recordatorios/editar/' : '/api/mini-recordatorios/guardar/';
+      } else {
+        url = modoEdicion ? '/api/recordatorios/editar/' : '/api/recordatorios/guardar/';
       }
-
-      const url = modoEdicion ? '/api/recordatorios/editar/' : '/api/recordatorios/guardar/';
 
       fetch(url, {
         method: 'POST',
@@ -504,43 +545,50 @@
       .then(response => {
         if (response.status === 'ok') {
           cerrarModal();
-          cargarRecordatorios();
+          seccionActual === 'mini_agenda' ? cargarMiniRecordatorios() : cargarRecordatorios();
         } else {
           alert('Error: ' + response.mensaje);
         }
       })
       .catch(err => {
-        console.error('Error al guardar:', err);
-        alert('Error al guardar el recordatorio');
+        console.error('Error:', err);
+        alert('Error al guardar');
       });
     }
 
     function eliminarPanel(itemId) {
-      if (!confirm('¿Estás seguro de eliminar este recordatorio?')) return;
+      if (!confirm('¿Estás seguro de eliminar este elemento?')) return;
 
-      fetch('/api/recordatorios/eliminar/', {
+      const url = seccionActual === 'mini_agenda' 
+        ? '/api/mini-recordatorios/eliminar/' 
+        : '/api/recordatorios/eliminar/';
+
+      fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: itemId, seccion: seccionActual })
+        body: JSON.stringify({ id: itemId })
       })
       .then(res => res.json())
       .then(response => {
         if (response.status === 'ok') {
-          cargarRecordatorios();
+          seccionActual === 'mini_agenda' ? cargarMiniRecordatorios() : cargarRecordatorios();
         } else {
           alert('Error: ' + response.mensaje);
         }
       })
       .catch(err => {
-        console.error('Error al eliminar:', err);
-        alert('Error al eliminar el recordatorio');
+        console.error('Error:', err);
+        alert('Error al eliminar');
       });
     }
 
-    // ------------------ Renderizar contenido ------------------
+    // ==========================================
+    // RENDERIZAR CONTENIDO
+    // ==========================================
     function renderizar() {
       content.innerHTML = '';
       
+      // BIBLIOTECA
       if (seccionActual === 'biblioteca') {
         fetch('/obtener_libros/')
           .then(res => res.json())
@@ -557,10 +605,10 @@
                 return;
               }
 
-              const tituloDia = document.createElement('div');
-              tituloDia.className = 'titulo-dia';
-              tituloDia.textContent = 'Estos son tus libros guardados 📚';
-              content.appendChild(tituloDia);
+              const titulo = document.createElement('div');
+              titulo.className = 'titulo-dia';
+              titulo.textContent = 'Estos son tus libros guardados 📚';
+              content.appendChild(titulo);
 
               libros.forEach(libro => {
                 const panel = document.createElement('div');
@@ -571,32 +619,34 @@
                   </div>
                   <h2>${libro.nombre}</h2>
                   <p>${libro.descripcion}</p>
-                  <small>📖 Autor: ${libro.publicado_por} | 📅 Año: ${libro.anio} | 🎭 Género: ${libro.genero}</small>
+                  <small>📖 ${libro.publicado_por} | 📅 ${libro.anio} | 🎭 ${libro.genero}</small>
                 `;
                 content.appendChild(panel);
               });
             }
-          })
-          .catch(err => console.error('Error al cargar libros:', err));
-        
+          });
         return;
       }
 
+      // AGENDA O MINI AGENDA
       const lista = datos[seccionActual];
       
-      if (lista.length === 0) {
+      if (!lista || lista.length === 0) {
+        const titulo = seccionActual === 'mini_agenda' ? '📝 Mini Recordatorios' : '📅 Agenda';
         content.innerHTML = `
           <div class="panel">
-            <h2>📅 Agenda</h2>
+            <h2>${titulo}</h2>
             <p>No hay elementos aún. Usa el botón <b>+ Nuevo</b> para agregar uno.</p>
           </div>`;
         return;
       }
 
-      const tituloDia = document.createElement('div');
-      tituloDia.className = 'titulo-dia';
-      tituloDia.textContent = 'Estas son tus actividades de hoy 📅';
-      content.appendChild(tituloDia);
+      const titulo = document.createElement('div');
+      titulo.className = 'titulo-dia';
+      titulo.textContent = seccionActual === 'mini_agenda' 
+        ? 'Tus mini recordatorios 📝' 
+        : 'Estas son tus actividades de hoy 📅';
+      content.appendChild(titulo);
       
       lista.sort((a, b) => a.hora.localeCompare(b.hora));
 
@@ -616,7 +666,9 @@
       });
     }
 
-    // ------------------ Eliminar libro ------------------
+    // ==========================================
+    // ELIMINAR LIBRO
+    // ==========================================
     function eliminarLibro(libroId) {
       if (!confirm('¿Estás seguro de eliminar este libro?')) return;
 
@@ -628,19 +680,17 @@
       .then(res => res.json())
       .then(response => {
         if (response.status === 'ok') {
-          alert('📚 Libro eliminado correctamente');
+          alert('📚 Libro eliminado');
           renderizar();
         } else {
           alert('Error: ' + response.mensaje);
         }
-      })
-      .catch(err => {
-        console.error('Error al eliminar libro:', err);
-        alert('Error al eliminar el libro');
       });
     }
 
-    // ------------------ Notificaciones y Alarmas ------------------
+    // ==========================================
+    // NOTIFICACIONES Y ALARMAS
+    // ==========================================
     const notificacionesDiv = document.getElementById('notificaciones');
     const notifDot = document.getElementById('notif-dot');
     const alarmAlert = document.getElementById('alarm-alert');
@@ -659,7 +709,7 @@
     function verificarProximosEventos() {
       if (!datos.agenda || datos.agenda.length === 0) {
         notifDot.style.display = 'none';
-        notificacionesDiv.innerHTML = '<p>No hay notificaciones por ahora.</p>';
+        notificacionesDiv.innerHTML = '<p>No hay notificaciones.</p>';
         return;
       }
 
@@ -673,44 +723,36 @@
         return diferencia >= 0 && diferencia <= 10;
       });
 
-      const eventosAhora = datos.agenda.filter(item => {
-        const [h, m] = item.hora.split(':').map(Number);
-        const minutosEvento = h * 60 + m;
-        const diferencia = Math.abs(minutosEvento - horaActual);
-        return diferencia <= 1;
-      });
-
       if (proximos.length > 0) {
         notifDot.style.display = 'block';
         notificacionesDiv.innerHTML = '';
         proximos.forEach(ev => {
           const notif = document.createElement('div');
           notif.className = 'notif';
-          notif.textContent = `⏰ En menos de 10 min: ${ev.titulo} (${ev.hora})`;
+          notif.textContent = `⏰ En 10 min: ${ev.titulo} (${ev.hora})`;
           notificacionesDiv.appendChild(notif);
         });
       } else {
         notifDot.style.display = 'none';
-        notificacionesDiv.innerHTML = '<p>No hay notificaciones por ahora.</p>';
+        notificacionesDiv.innerHTML = '<p>No hay notificaciones.</p>';
       }
 
+      // Alarma
+      const eventosAhora = datos.agenda.filter(item => {
+        const [h, m] = item.hora.split(':').map(Number);
+        const minutosEvento = h * 60 + m;
+        return Math.abs(minutosEvento - horaActual) <= 1;
+      });
+
       eventosAhora.forEach(evento => {
-        const eventoKey = `${evento.id}-${evento.hora}`;
-        if (!eventosNotificados.has(eventoKey)) {
-          eventosNotificados.add(eventoKey);
-          activarAlarma(evento);
+        const key = `${evento.id}-${evento.hora}`;
+        if (!eventosNotificados.has(key)) {
+          eventosNotificados.add(key);
+          alarmMessage.innerHTML = `<h3>${evento.titulo}</h3><p>${evento.descripcion}</p><p><strong>${evento.hora}</strong></p>`;
+          alarmAlert.style.display = 'block';
+          alarmSound.play().catch(e => console.log('Audio error:', e));
         }
       });
-    }
-
-    function activarAlarma(evento) {
-      alarmMessage.innerHTML = `
-        <h3>${evento.titulo}</h3>
-        <p>${evento.descripcion}</p>
-        <p><strong>Hora: ${evento.hora}</strong></p>
-      `;
-      alarmAlert.style.display = 'block';
-      alarmSound.play().catch(err => console.log('Error al reproducir sonido:', err));
     }
 
     function detenerAlarma() {

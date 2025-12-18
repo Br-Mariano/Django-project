@@ -36,6 +36,23 @@ class Recordatorio(models.Model):
         return f"{self.titulo} - {self.usuario.usuario}"
 
 
+class MiniRecordatorio(models.Model):
+    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='mini_recordatorios')
+    titulo = models.CharField(max_length=200, help_text="Título del mini recordatorio")
+    descripcion = models.TextField(blank=True, help_text="Descripción opcional")
+    hora = models.TimeField(help_text="Hora del recordatorio")
+    creado_en = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'mini_recordatorios'  # Tabla separada
+        ordering = ['hora']
+        verbose_name = 'Mini Recordatorio'
+        verbose_name_plural = 'Mini Recordatorios'
+    
+    def __str__(self):
+        return f"[MINI] {self.titulo} - {self.usuario.usuario}"
+
+
 class Libro(models.Model):
     GENEROS = [
         ('ficcion', 'Ficción'),

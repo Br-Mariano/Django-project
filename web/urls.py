@@ -10,8 +10,12 @@ urlpatterns = [
     path('api/recordatorios/', views.obtener_recordatorios, name='obtener_recordatorios'),
     path('api/recordatorios/guardar/', views.guardar_recordatorio, name='guardar_recordatorio'),
     path('api/recordatorios/editar/', views.editar_recordatorio, name='editar_recordatorio'),
-    path('api/recordatorios/eliminar/', views.eliminar_recordatorio, name='eliminar_recordatorio'),    
+    path('api/recordatorios/eliminar/', views.eliminar_recordatorio, name='eliminar_recordatorio'),
+    path('api/mini-recordatorios/', views.obtener_mini_recordatorios, name='obtener_mini_recordatorios'),
+    path('api/mini-recordatorios/guardar/', views.guardar_mini_recordatorio, name='guardar_mini_recordatorio'),
+    path('api/mini-recordatorios/editar/', views.editar_mini_recordatorio, name='editar_mini_recordatorio'),
+    path('api/mini-recordatorios/eliminar/', views.eliminar_mini_recordatorio, name='eliminar_mini_recordatorio'),
     path('guardar_libro/', views.guardar_libro, name='guardar_libro'),
     path('obtener_libros/', views.obtener_libros, name='obtener_libros'),
     path('eliminar_libro/', views.eliminar_libro, name='eliminar_libro'),
-]   
+]
