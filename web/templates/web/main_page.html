@@ -340,7 +340,7 @@
         <button class="mini-agenda-btn" onclick="showSection('mini_agenda')">Mini Recordatorios</button>
         <button class="biblioteca-btn" onclick="showSection('biblioteca')">Biblioteca</button>
       </div>
-      <button class="nuevo-btn" onclick="abrirModal()">+ Nuevo</button>
+      <button class="nuevo-btn" onclick="abrirModal(null)">+ Nuevo</button>
     </div>
 
     <div class="content-area" id="section-content"></div>
@@ -472,7 +472,7 @@
       if (seccion === 'biblioteca') {
         nuevoBtn.onclick = () => window.location.href = '/registro_libro/';
       } else {
-        nuevoBtn.onclick = abrirModal;
+        nuevoBtn.onclick = abrirModal(null);
       }
   
       renderizar();
@@ -481,33 +481,41 @@
     // ==========================================
     // MODAL - CRUD
     // ==========================================
-    function abrirModal(itemId = null) {
-      modoEdicion = itemId !== null;
-      
-      let tituloModal = 'Agregar nuevo elemento';
-      if (modoEdicion) {
-        tituloModal = 'Editar elemento';
-      } else if (seccionActual === 'mini_agenda') {
-        tituloModal = 'Agregar Mini Recordatorio';
-      } else if (seccionActual === 'agenda') {
-        tituloModal = 'Agregar Recordatorio';
-      }
-      
-      document.getElementById('modal-title').textContent = tituloModal;
-      
-      if (modoEdicion) {
-        const lista = datos[seccionActual];
-        const item = lista.find(i => i.id == itemId);
-        if (item) {
-          document.getElementById('edit-id').value = itemId;
-          document.getElementById('titulo').value = item.titulo;
-          document.getElementById('descripcion').value = item.descripcion;
-          document.getElementById('hora').value = item.hora;
-        }
-      }
-      
-      document.getElementById('modal-bg').style.display = 'flex';
+function abrirModal(itemId = null) {
+  // Validar que itemId sea válido
+  modoEdicion = itemId !== null && itemId !== '' && itemId !== '.';
+  
+  let tituloModal = 'Agregar nuevo elemento';
+  if (modoEdicion) {
+    tituloModal = 'Editar elemento';
+  } else if (seccionActual === 'mini_agenda') {
+    tituloModal = 'Agregar Mini Recordatorio';
+  } else if (seccionActual === 'agenda') {
+    tituloModal = 'Agregar Recordatorio';
+  }
+  
+  document.getElementById('modal-title').textContent = tituloModal;
+  
+  // Limpiar campos primero
+  document.getElementById('edit-id').value = '';
+  document.getElementById('titulo').value = '';
+  document.getElementById('descripcion').value = '';
+  document.getElementById('hora').value = '';
+  
+  // Si es edición, llenar con los datos del item
+  if (modoEdicion) {
+    const lista = datos[seccionActual];
+    const item = lista.find(i => String(i.id) === String(itemId));
+    if (item) {
+      document.getElementById('edit-id').value = itemId;
+      document.getElementById('titulo').value = item.titulo || '';
+      document.getElementById('descripcion').value = item.descripcion || '';
+      document.getElementById('hora').value = item.hora || '';
     }
+  }
+  
+  document.getElementById('modal-bg').style.display = 'flex';
+}
 
     function cerrarModal() {
       document.getElementById('modal-bg').style.display = 'none';
